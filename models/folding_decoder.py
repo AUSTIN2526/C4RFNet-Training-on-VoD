@@ -9,9 +9,9 @@ class FoldingDecoder(nn.Module):
         self.grid_w = grid_w
         self.latent_dim = latent_dim
         self.mlp1 = nn.Sequential(
-            nn.Linear(2 + latent_dim, 2051),
+            nn.Linear(2 + latent_dim, 2050),
             nn.ReLU(inplace=True),
-            nn.Linear(2051, 256),
+            nn.Linear(2050, 256),
             nn.ReLU(inplace=True),
             nn.Linear(256, 64),
             nn.ReLU(inplace=True),
