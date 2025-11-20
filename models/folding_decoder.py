@@ -8,19 +8,19 @@ class FoldingDecoder(nn.Module):
         self.grid_h = grid_h
         self.grid_w = grid_w
         self.latent_dim = latent_dim
+        
+        # === FIX: Removed redundant Linear(2050->2050) layer ===
+        # According to Paper Table III, "Conv1" takes 2050 inputs and outputs 256.
         self.mlp1 = nn.Sequential(
-            nn.Linear(2 + latent_dim, 2050),
-            nn.ReLU(inplace=True),
-            nn.Linear(2050, 256),
+            nn.Linear(2 + latent_dim, 256),  # Correct: 2050 -> 256
             nn.ReLU(inplace=True),
             nn.Linear(256, 64),
             nn.ReLU(inplace=True),
             nn.Linear(64, 3),
         )
+        
         self.refine = nn.Sequential(
-            nn.Linear(3 + latent_dim, 2051),
-            nn.ReLU(inplace=True),
-            nn.Linear(2051, 256),
+            nn.Linear(3 + latent_dim, 256),  # Correct: 2051 -> 256
             nn.ReLU(inplace=True),
             nn.Linear(256, 64),
             nn.ReLU(inplace=True),
@@ -40,8 +40,11 @@ class FoldingDecoder(nn.Module):
         grid = self._build_grid(B, device)                # (B,M,2)
         M = grid.size(1)
         g = global_feat.unsqueeze(1).expand(B, M, self.latent_dim)
-        x1_in = torch.cat([grid, g], dim=-1)              # (B,M,2+F)
+        
+        x1_in = torch.cat([grid, g], dim=-1)              # (B,M,2050)
         xyz = self.mlp1(x1_in)                            # (B,M,3)
-        x2_in = torch.cat([xyz, g], dim=-1)               # (B,M,3+F)
+        
+        x2_in = torch.cat([xyz, g], dim=-1)               # (B,M,2051)
         xyz_delta = self.refine(x2_in)                    # (B,M,3)
+        
         return xyz + xyz_delta                            # (B,M,3)
